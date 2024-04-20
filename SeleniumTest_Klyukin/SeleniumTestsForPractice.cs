@@ -119,7 +119,7 @@ public class SeleniumTestsForPractice
     
     // 5. Тест на изменение названия сообщества
     [Test]
-    public void AddingEventTest()
+    public void EditingCommunityNameTest()
     {
         // Авторизация
         Authorization();
