@@ -10,10 +10,9 @@ namespace SeleniumTest_Klyukin;
 public class SeleniumTestsForPractice
 {
     public ChromeDriver driver;
-    
-    // 1. Тест на авторизацию
-    [Test]
-    public void AuthorizationTest()
+
+    [SetUp]
+    public void Setup()
     {
         var options = new ChromeOptions();
         options.AddArguments("--no-sandbox", "--start-maximized", "--disable-extensions");
@@ -21,22 +20,15 @@ public class SeleniumTestsForPractice
         // Входим в Хром
         driver = new ChromeDriver(options);
         driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(3);
-       
-        // Переходим по урл https://staff-testing.testkontur.ru
-        driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru");
-        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
-        wait.Until(ExpectedConditions.ElementIsVisible(By.Id("Username")));
         
-        // Вводим логин и пароль
-        var login = driver.FindElement(By.Id("Username"));
-        login.SendKeys("a.o.klyukin@yandex.ru");
-        var password = driver.FindElement(By.Name("Password"));
-        password.SendKeys("IaMrEaDytony35!");
-        
-        // Нажимаем на кнопку "Войти"
-        var enter = driver.FindElement(By.Name("button"));
-        enter.Click();
-        var news = driver.FindElement(By.CssSelector("[data-tid='Feed']"));
+        // Авторизация
+        Authorization();
+    }
+
+    // 1. Тест на авторизацию
+    [Test]
+    public void AuthorizationTest()
+    {
         
         // Проверяем, что мы находимся на нужной странице
         var currentUrl = driver.Url;
@@ -48,8 +40,6 @@ public class SeleniumTestsForPractice
     [Test]
     public void NavigationTest()
     {
-        // Авторизация
-        Authorization();
         
         // Кликаем на "Сообщества"
         var community = driver.FindElements(By.CssSelector("[data-tid='Community']")).First(element => element.Displayed);
@@ -64,8 +54,6 @@ public class SeleniumTestsForPractice
     // 3. Тест на наличие поисковой строки в окне поиска по файлам
     [Test] public void FilesSearchPageTest()
     {
-        // Авторизация
-        Authorization();
         
         // Переходим на страницу Файлы
         driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru/files");
@@ -84,8 +72,6 @@ public class SeleniumTestsForPractice
     [Test]
     public void AddingCommunityTest()
     {
-        // Авторизация
-        Authorization();
         
         // Переходим на страницу Сообщества
         driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru/communities");
@@ -94,10 +80,8 @@ public class SeleniumTestsForPractice
         var addCommunityButton = driver.FindElement(By.CssSelector("[class='sc-juXuNZ sc-ecQkzk WTxfS vPeNx']")); // больше не за что было зацепиться
         addCommunityButton.Click();
         
-        // Генерируем уникальное название для сообщества, выводим его
+        // Генерируем уникальное название для сообщества
         var communityName = Guid.NewGuid().ToString();
-        Console.WriteLine("Уникальное название сообщества: " + communityName);
-        
 
         // Находим поле Название сообщества, вводим туда сгенерированное выше название
         var communityNameBar = driver.FindElement(By.CssSelector("[placeholder='Название сообщества']"));
@@ -121,8 +105,6 @@ public class SeleniumTestsForPractice
     [Test]
     public void EditingCommunityNameTest()
     {
-        // Авторизация
-        Authorization();
         
         // Создание сообщества с уникальным названием
         addUniqueCommunity();
@@ -134,9 +116,8 @@ public class SeleniumTestsForPractice
         var currentUrl = driver.Url;
         driver.Navigate().GoToUrl(driver.Url+"/settings");
         
-        // Генерируем уникальное название для сообщества, выводим его
+        // Генерируем новое уникальное название для сообщества
         var communityName = Guid.NewGuid().ToString();
-        Console.WriteLine("Новое название сообщества: " + communityName);
         
         // Находим поле Название сообщества, удаляем старое название
         var communityNameBar = driver.FindElement(By.CssSelector("[placeholder='Название сообщества']"));
@@ -148,9 +129,9 @@ public class SeleniumTestsForPractice
         communityNameBar.SendKeys(communityName);
         var saveCommunitySettingsButton = driver.FindElement(By.XPath("//*[text()='Сохранить']")); // иначе никак, классы одинаковые, tid-ов нет
         saveCommunitySettingsButton.Click();
-        Thread.Sleep(4000);
-        var wait2 = new WebDriverWait(driver, TimeSpan.FromSeconds(3));
-        wait2.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("[data-tid='Members']"))); // Тест падал в этом месте без явных ожиданий
+        
+        var waitForCommunityPage = new WebDriverWait(driver, TimeSpan.FromSeconds(4));
+        waitForCommunityPage.Until(ExpectedConditions.ElementIsVisible(By.CssSelector("[class='sc-bCwfaz gIwgPr']"))); // Тест падал в этом месте без явных ожиданий
         
         // Сравниваем название в заголовке созданного сообщества со сгенерированным значением
         var displayedCommunityName = driver.FindElement(By.CssSelector("[data-tid='Title']")).Text;
@@ -161,12 +142,6 @@ public class SeleniumTestsForPractice
     // Выносим Авторизацию в метод
     public void Authorization()
     {
-        var options = new ChromeOptions();
-        options.AddArguments("--no-sandbox", "--start-maximized", "--disable-extensions");
-       
-        // Входим в Хром
-        driver = new ChromeDriver(options);
-        driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(3);
        
         // Переходим по урл https://staff-testing.testkontur.ru
         driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru");
@@ -189,6 +164,7 @@ public class SeleniumTestsForPractice
     // Выносим создание сообщества с уникальным названием в метод
     public void addUniqueCommunity()
     {
+        // Переходим на страницу Сообщества
         driver.Navigate().GoToUrl("https://staff-testing.testkontur.ru/communities");
         
         //Нажимаем кнопку Создать
@@ -197,9 +173,7 @@ public class SeleniumTestsForPractice
         
         // Генерируем уникальное название для сообщества, выводим его
         var communityName = Guid.NewGuid().ToString();
-        Console.WriteLine("Уникальное название сообщества: " + communityName);
         
-
         // Находим поле Название сообщества, вводим туда сгенерированное выше название
         var communityNameBar = driver.FindElement(By.CssSelector("[placeholder='Название сообщества']"));
         communityNameBar.SendKeys(communityName);
@@ -212,6 +186,7 @@ public class SeleniumTestsForPractice
     [TearDown]
     public void TearDown()
     {
-        driver.Quit(); 
+        driver.Quit();
+        driver = null;
     }
 }
